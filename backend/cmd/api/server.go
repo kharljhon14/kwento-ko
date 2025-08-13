@@ -18,6 +18,8 @@ func (s *Server) mountRouter() {
 	router := gin.Default()
 
 	router.GET("/api/v1/health", s.healthCheckHandler)
+	router.GET("/api/v1/auth/:provider", s.signInWithProviderHandler)
+	router.GET("/api/v1/auth/:provider/callback", s.signInCallbackHandler)
 	s.router = router
 }
 
