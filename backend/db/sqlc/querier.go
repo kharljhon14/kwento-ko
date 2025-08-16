@@ -11,9 +11,14 @@ import (
 )
 
 type Querier interface {
+	CreateTag(ctx context.Context, name string) (Tag, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (pgtype.UUID, error)
+	DeleteTag(ctx context.Context, id pgtype.UUID) error
+	GetTag(ctx context.Context, id pgtype.UUID) (Tag, error)
+	GetTags(ctx context.Context, arg GetTagsParams) ([]Tag, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
+	UpdateTag(ctx context.Context, arg UpdateTagParams) (Tag, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 

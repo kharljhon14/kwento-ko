@@ -40,6 +40,8 @@ func (s *Server) mountRouter() {
 	authRoutes.GET("/api/v1/users/:id", s.getUser)
 	authRoutes.PATCH("/api/v1/users", s.updateUserHandler)
 
+	authRoutes.POST("/api/v1/tags", s.createTagHandler)
+
 	s.router = router
 }
 
