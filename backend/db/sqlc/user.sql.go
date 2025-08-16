@@ -42,7 +42,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (pgtype.
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, google_id, email, name, profile_image, active FROM users
+SELECT id, google_id, email, name, profile_image FROM users
 WHERE email = $1
 `
 
@@ -55,7 +55,25 @@ func (q *Queries) GetUser(ctx context.Context, email string) (User, error) {
 		&i.Email,
 		&i.Name,
 		&i.ProfileImage,
-		&i.Active,
 	)
 	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET name = $1
+WHERE email = $2
+RETURNING name
+`
+
+type UpdateUserParams struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (string, error) {
+	row := q.db.QueryRow(ctx, updateUser, arg.Name, arg.Email)
+	var name string
+	err := row.Scan(&name)
+	return name, err
 }

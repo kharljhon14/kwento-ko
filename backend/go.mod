@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/gin-gonic/gin v1.10.1
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/markbates/goth v1.81.0
 )

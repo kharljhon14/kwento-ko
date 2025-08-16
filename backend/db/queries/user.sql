@@ -11,3 +11,9 @@ INSERT into users(
 -- name: GetUser :one
 SELECT * FROM users
 WHERE email = $1;
+
+-- name: UpdateUser :one
+UPDATE users
+SET name = $1
+WHERE email = $2
+RETURNING name;

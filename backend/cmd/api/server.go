@@ -1,13 +1,17 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
+)
 
 type Server struct {
 	router *gin.Engine
+	store  db.Store
 }
 
-func NewServer() (*Server, error) {
-	server := &Server{}
+func NewServer(store db.Store) (*Server, error) {
+	server := &Server{store: store}
 
 	server.mountRouter()
 	return server, nil

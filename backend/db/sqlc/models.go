@@ -14,5 +14,4 @@ type User struct {
 	Email        string      `json:"email"`
 	Name         string      `json:"name"`
 	ProfileImage pgtype.Text `json:"profile_image"`
-	Active       bool        `json:"active"`
 }

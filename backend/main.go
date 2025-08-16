@@ -9,13 +9,23 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
 	"www.github.com/kharljhon14/kwento-ko/cmd/api"
+	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
 )
 
 func main() {
-	_, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	config, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config.ConnConfig.Config.RuntimeParams["default_query_exec_mode"] = "exec"
+
+	connPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		log.Fatal("failed to connect to database:", err)
 	}
+
+	defer connPool.Close()
 
 	clientID := os.Getenv("GOOGLE_CLIENT_ID")
 	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
@@ -29,7 +39,8 @@ func main() {
 		google.New(clientID, clientSecret, clientCallbackURL),
 	)
 
-	server, err := api.NewServer()
+	store := db.NewStore(connPool)
+	server, err := api.NewServer(store)
 	if err != nil {
 		log.Fatal("failed to create new server:", err)
 	}
