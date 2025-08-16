@@ -13,7 +13,7 @@ import (
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (pgtype.UUID, error)
 	GetUser(ctx context.Context, email string) (User, error)
-	UpdateUser(ctx context.Context, arg UpdateUserParams) (string, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

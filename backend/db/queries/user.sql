@@ -16,4 +16,4 @@ WHERE email = $1;
 UPDATE users
 SET name = $1
 WHERE email = $2
-RETURNING name;
+RETURNING *;

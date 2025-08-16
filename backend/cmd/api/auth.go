@@ -1,15 +1,15 @@
 package api
 
 import (
-	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/markbates/goth/gothic"
 	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
-	utils "www.github.com/kharljhon14/kwento-ko/internal"
+	"www.github.com/kharljhon14/kwento-ko/internal/token"
+	"www.github.com/kharljhon14/kwento-ko/internal/utils"
 )
 
 func (s Server) signInWithProviderHandler(ctx *gin.Context) {
@@ -30,7 +30,19 @@ func (s Server) signInCallbackHandler(ctx *gin.Context) {
 
 	user, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	_, err = s.store.GetUser(ctx, user.Email)
+	if err == nil {
+		duration := (24 * time.Hour) * 7
+		token, err := s.tokenMaker.CreateToken(user.Email, duration)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusOK, token)
 		return
 	}
 
@@ -44,39 +56,40 @@ func (s Server) signInCallbackHandler(ctx *gin.Context) {
 	_, err = s.store.CreateUser(ctx, newUser)
 	if err != nil {
 
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			switch pgErr.ConstraintName {
-			case "users_email_key":
-				ctx.JSON(http.StatusOK, user.IDToken)
-				return
-			}
-		} else {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
-	ctx.JSON(http.StatusOK, user.IDToken)
+	duration := (24 * time.Hour) * 7
+	token, err := s.tokenMaker.CreateToken(user.Email, duration)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, token)
 }
 
 type updateUserRequest struct {
-	Name  string `json:"name" binding:"required"`
-	Email string `json:"email:" binding:"required"`
+	Name string `json:"name" binding:"required"`
 }
 
 func (s Server) updateUserHandler(ctx *gin.Context) {
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	var req updateUserRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
 	}
 
-	updatedName, err := s.store.UpdateUser(ctx, db.UpdateUserParams{Name: req.Name, Email: req.Email})
+	updatedName, err := s.store.UpdateUser(ctx, db.UpdateUserParams{Name: req.Name, Email: authPayload.Email})
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
-	ctx.JSON(http.StatusOK, updatedName)
+	ctx.JSON(http.StatusOK, envelope{"data": updatedName})
 
 }
