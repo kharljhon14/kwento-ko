@@ -37,7 +37,8 @@ func (s *Server) mountRouter() {
 
 	authRoutes := router.Group("/").Use(authMiddleware(*s.tokenMaker))
 
-	authRoutes.PATCH("/api/v1/user", s.updateUserHandler)
+	authRoutes.GET("/api/v1/users/:id", s.getUser)
+	authRoutes.PATCH("/api/v1/users", s.updateUserHandler)
 
 	s.router = router
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const minSecretKeySize = 32
@@ -13,8 +14,8 @@ type JWTMaker struct {
 	secretKey string
 }
 
-func (j JWTMaker) CreateToken(email string, duration time.Duration) (string, error) {
-	payload, err := NewPayload(email, duration)
+func (j JWTMaker) CreateToken(id pgtype.UUID, email string, duration time.Duration) (string, error) {
+	payload, err := NewPayload(id, email, duration)
 	if err != nil {
 		return "", nil
 	}

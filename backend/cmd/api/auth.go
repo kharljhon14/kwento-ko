@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/markbates/goth/gothic"
 	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
-	"www.github.com/kharljhon14/kwento-ko/internal/token"
 	"www.github.com/kharljhon14/kwento-ko/internal/utils"
 )
 
@@ -34,15 +33,18 @@ func (s Server) signInCallbackHandler(ctx *gin.Context) {
 		return
 	}
 
-	_, err = s.store.GetUser(ctx, user.Email)
+	gotUser, err := s.store.GetUserByEmail(ctx, user.Email)
 	if err == nil {
 		duration := (24 * time.Hour) * 7
-		token, err := s.tokenMaker.CreateToken(user.Email, duration)
+		token, err := s.tokenMaker.CreateToken(gotUser.ID, user.Email, duration)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
-		ctx.JSON(http.StatusOK, token)
+		ctx.Header(authorizationHeaderKey, token)
+
+		ctx.SetCookie("access_token", token, int(duration.Seconds()), "/", "localhost:8080", true, true)
+		ctx.Redirect(http.StatusTemporaryRedirect, "/api/v1/health")
 		return
 	}
 
@@ -53,7 +55,7 @@ func (s Server) signInCallbackHandler(ctx *gin.Context) {
 		ProfileImage: pgtype.Text{String: user.AvatarURL, Valid: true},
 	}
 
-	_, err = s.store.CreateUser(ctx, newUser)
+	userID, err := s.store.CreateUser(ctx, newUser)
 	if err != nil {
 
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
@@ -61,35 +63,13 @@ func (s Server) signInCallbackHandler(ctx *gin.Context) {
 	}
 
 	duration := (24 * time.Hour) * 7
-	token, err := s.tokenMaker.CreateToken(user.Email, duration)
+	token, err := s.tokenMaker.CreateToken(userID, user.Email, duration)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, token)
-}
-
-type updateUserRequest struct {
-	Name string `json:"name" binding:"required"`
-}
-
-func (s Server) updateUserHandler(ctx *gin.Context) {
-	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-
-	var req updateUserRequest
-
-	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	updatedName, err := s.store.UpdateUser(ctx, db.UpdateUserParams{Name: req.Name, Email: authPayload.Email})
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, envelope{"data": updatedName})
-
+	ctx.Header(authorizationHeaderKey, token)
+	ctx.SetCookie("access_token", token, int(duration.Seconds()), "/", "localhost:8080", true, true)
+	ctx.Redirect(http.StatusTemporaryRedirect, "/api/v1/health")
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var (
@@ -14,22 +14,18 @@ var (
 )
 
 type Payload struct {
-	ID    uuid.UUID `json:"id"`
-	Email string    `json:"email"`
+	ID    pgtype.UUID `json:"id"`
+	Email string      `json:"email"`
 
 	jwt.RegisteredClaims
 }
 
-func NewPayload(email string, duration time.Duration) (*Payload, error) {
-	tokenID, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
+func NewPayload(id pgtype.UUID, email string, duration time.Duration) (*Payload, error) {
 
 	now := time.Now()
 
 	payload := &Payload{
-		ID:    tokenID,
+		ID:    id,
 		Email: email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),

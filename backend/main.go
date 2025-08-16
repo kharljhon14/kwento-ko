@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
@@ -18,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	config.ConnConfig.Config.RuntimeParams["default_query_exec_mode"] = "exec"
+	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeExec
 
 	connPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
