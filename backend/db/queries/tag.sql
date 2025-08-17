@@ -7,7 +7,8 @@ INSERT INTO tags(
 
 -- name: UpdateTag :one
 UPDATE tags
-SET name = $1
+SET name = $1,
+    version = version + 1
 WHERE id = $2
 RETURNING *;
 

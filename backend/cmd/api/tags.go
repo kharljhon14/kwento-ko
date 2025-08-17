@@ -119,3 +119,46 @@ func (s Server) getTagsHandler(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, envelope{"data": tags, "metadata": metadata})
 }
+
+type updateTagRequest struct {
+	Name string `json:"name" binding:"required,max=60"`
+}
+
+func (s Server) updateTagHandler(ctx *gin.Context) {
+	var req updateTagRequest
+
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	var uri getTagURI
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	ID, err := uuid.Parse(uri.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	updatedTag, err := s.store.UpdateTag(ctx,
+		db.UpdateTagParams{
+			Name: req.Name,
+			ID:   pgtype.UUID{Bytes: ID, Valid: true},
+		},
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, envelope{"data": updatedTag})
+}

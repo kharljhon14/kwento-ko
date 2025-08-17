@@ -107,7 +107,8 @@ func (q *Queries) GetTagsCount(ctx context.Context) (int64, error) {
 
 const updateTag = `-- name: UpdateTag :one
 UPDATE tags
-SET name = $1
+SET name = $1,
+    version = version + 1
 WHERE id = $2
 RETURNING id, name, created_at, version
 `
