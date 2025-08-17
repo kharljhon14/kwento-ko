@@ -44,6 +44,7 @@ func (s *Server) mountRouter() {
 	authRoutes.GET("/api/v1/tags/:id", s.getTagHandler)
 	authRoutes.GET("/api/v1/tags", s.getTagsHandler)
 	authRoutes.PATCH("/api/v1/tags/:id", s.updateTagHandler)
+	authRoutes.DELETE("/api/v1/tags/:id", s.deleteTagHandler)
 
 	s.router = router
 }

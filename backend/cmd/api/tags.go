@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -161,4 +162,37 @@ func (s Server) updateTagHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, envelope{"data": updatedTag})
+}
+
+func (s Server) deleteTagHandler(ctx *gin.Context) {
+	var uri getTagURI
+
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	ID, err := uuid.Parse(uri.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	_, err = s.store.GetTag(ctx, pgtype.UUID{Bytes: ID, Valid: true})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			notFoundResponse(ctx, fmt.Errorf("tag with ID %s could not be found", uri.ID))
+			return
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = s.store.DeleteTag(ctx, pgtype.UUID{Bytes: ID, Valid: true})
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, nil)
 }
