@@ -15,5 +15,5 @@ func GenerateRandomName() string {
 	name := nameGenerator.Generate()
 
 	randomNumber := rand.Int64()
-	return fmt.Sprintf("%s%d", name, randomNumber)
+	return fmt.Sprintf("%s-%d", name, randomNumber)
 }
