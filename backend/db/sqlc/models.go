@@ -9,12 +9,12 @@ import (
 )
 
 type Blog struct {
-	ID       pgtype.UUID        `json:"id"`
-	Author   pgtype.UUID        `json:"author"`
-	Title    string             `json:"title"`
-	Content  string             `json:"content"`
-	CreateAt pgtype.Timestamptz `json:"create_at"`
-	Version  int32              `json:"version"`
+	ID        pgtype.UUID        `json:"id"`
+	Author    pgtype.UUID        `json:"author"`
+	Title     string             `json:"title"`
+	Content   string             `json:"content"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Version   int32              `json:"version"`
 }
 
 type BlogTag struct {

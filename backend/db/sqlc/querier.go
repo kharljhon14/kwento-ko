@@ -11,14 +11,19 @@ import (
 )
 
 type Querier interface {
+	CreateBlog(ctx context.Context, arg CreateBlogParams) (Blog, error)
 	CreateTag(ctx context.Context, name string) (Tag, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (pgtype.UUID, error)
+	DeleteBlog(ctx context.Context, arg DeleteBlogParams) error
 	DeleteTag(ctx context.Context, id pgtype.UUID) error
+	GetBlogByID(ctx context.Context, id pgtype.UUID) (GetBlogByIDRow, error)
+	GetBlogs(ctx context.Context, arg GetBlogsParams) ([]GetBlogsRow, error)
 	GetTag(ctx context.Context, id pgtype.UUID) (Tag, error)
 	GetTags(ctx context.Context, arg GetTagsParams) ([]Tag, error)
 	GetTagsCount(ctx context.Context) (int64, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
+	UpdateBlog(ctx context.Context, arg UpdateBlogParams) (Blog, error)
 	UpdateTag(ctx context.Context, arg UpdateTagParams) (Tag, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
