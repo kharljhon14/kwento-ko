@@ -36,6 +36,9 @@ ON u.id = b.author
 ORDER BY created_at DESC, b.id ASC
 LIMIT $1 OFFSET $2;
 
+-- name: GetBlogCount :one
+SELECT COUNT(*) FROM blogs;
+
 -- name: UpdateBlog :one
 UPDATE blogs
 SET title = $1,

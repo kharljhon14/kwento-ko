@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
+	"www.github.com/kharljhon14/kwento-ko/internal/filter"
 	"www.github.com/kharljhon14/kwento-ko/internal/token"
 )
 
@@ -35,13 +36,58 @@ func (s Server) createBlogHandler(ctx *gin.Context) {
 		Author:  authPayload.ID,
 	}
 
+	if len(req.Tags) > 5 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("tags must be max of 5")))
+		return
+	}
+
+	var tagIDs []pgtype.UUID
+	for _, id := range req.Tags {
+		ID, err := uuid.Parse(id)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+
+		tagIDs = append(tagIDs, pgtype.UUID{Bytes: ID, Valid: true})
+	}
+
 	newBlog, err := s.store.CreateBlog(ctx, args)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, envelope{"data": newBlog})
+	err = s.store.AddBlogTags(ctx,
+		db.AddBlogTagsParams{
+			BlogID:  newBlog.ID,
+			Column2: tagIDs,
+		},
+	)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	tags, err := s.store.GetBlogTags(ctx, newBlog.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	env := envelope{
+		"data": map[string]any{
+			"id":         newBlog.ID,
+			"author":     newBlog.Author,
+			"title":      newBlog.Title,
+			"content":    newBlog.Content,
+			"tags":       tags,
+			"created_at": newBlog.CreatedAt,
+			"version":    newBlog.Version,
+		},
+	}
+
+	ctx.JSON(http.StatusCreated, envelope{"data": env})
 }
 
 type getBlogURI struct {
@@ -73,6 +119,78 @@ func (s Server) getBlogHandler(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, envelope{"data": blog})
+	tags, err := s.store.GetBlogTags(ctx, pgtype.UUID{Bytes: ID, Valid: true})
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
+	env := envelope{
+		"data": map[string]any{
+			"id":         blog.ID,
+			"author":     blog.Name,
+			"title":      blog.Title,
+			"content":    blog.Content,
+			"tags":       tags,
+			"created_at": blog.CreatedAt,
+			"version":    blog.Version,
+		},
+	}
+
+	ctx.JSON(http.StatusOK, envelope{"data": env})
+}
+
+type getGlogsQuery struct {
+	Page     int32  `form:"page" binding:"omitempty,min=1"`
+	PageSize int32  `form:"page_size" binding:"omitempty,min=5,max=20"`
+	Sort     string `form:"sort" binding:"omitempty"`
+}
+
+func (s Server) getBlogsHandler(ctx *gin.Context) {
+	var query getGlogsQuery
+
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if query.Page == 0 {
+		query.Page = 1
+	}
+
+	if query.PageSize < 5 {
+		query.PageSize = 5
+	}
+
+	if query.Sort == "" {
+		query.Sort = "created_at"
+	}
+
+	filters := filter.Filter{
+		Page:         query.Page,
+		PageSize:     query.PageSize,
+		Sort:         query.Sort,
+		SortSafeList: []string{"title", "-title", "created_at", "-created_at"},
+	}
+
+	blogCount, err := s.store.GetBlogCount(ctx)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	args := db.GetBlogsParams{
+		Limit:  filters.Limit(),
+		Offset: filters.Offset(),
+	}
+
+	blogs, err := s.store.GetBlogs(ctx, args)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	metadata := filter.CalaculateMetadata(int(blogCount), int(filters.Page), int(filters.PageSize))
+
+	ctx.JSON(http.StatusOK, envelope{"data": blogs, "metadata": metadata})
 }

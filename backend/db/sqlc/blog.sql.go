@@ -96,6 +96,17 @@ func (q *Queries) GetBlogByID(ctx context.Context, id pgtype.UUID) (GetBlogByIDR
 	return i, err
 }
 
+const getBlogCount = `-- name: GetBlogCount :one
+SELECT COUNT(*) FROM blogs
+`
+
+func (q *Queries) GetBlogCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getBlogCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getBlogs = `-- name: GetBlogs :many
 SELECT 
 b.id, 
