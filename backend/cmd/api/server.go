@@ -35,6 +35,8 @@ func (s *Server) mountRouter() {
 	router.GET("/api/v1/auth/:provider", s.signInWithProviderHandler)
 	router.GET("/api/v1/auth/:provider/callback", s.signInCallbackHandler)
 
+	router.GET("/api/v1/tags", s.getTagsHandler)
+
 	authRoutes := router.Group("/").Use(authMiddleware(*s.tokenMaker))
 
 	authRoutes.GET("/api/v1/users/:id", s.getUser)

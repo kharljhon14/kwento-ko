@@ -16,13 +16,18 @@ INSERT INTO tags(
     name
 ) VALUES( 
     $1
-) RETURNING id, name
+) RETURNING id, name, created_at, version
 `
 
 func (q *Queries) CreateTag(ctx context.Context, name string) (Tag, error) {
 	row := q.db.QueryRow(ctx, createTag, name)
 	var i Tag
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.Version,
+	)
 	return i, err
 }
 
@@ -37,19 +42,25 @@ func (q *Queries) DeleteTag(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getTag = `-- name: GetTag :one
-SELECT id, name FROM tags
+SELECT id, name, created_at, version FROM tags
 WHERE id = $1
 `
 
 func (q *Queries) GetTag(ctx context.Context, id pgtype.UUID) (Tag, error) {
 	row := q.db.QueryRow(ctx, getTag, id)
 	var i Tag
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.Version,
+	)
 	return i, err
 }
 
 const getTags = `-- name: GetTags :many
-SELECT id, name FROM tags
+SELECT id, name, created_at, version FROM tags
+ORDER BY created_at DESC, id ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -67,7 +78,12 @@ func (q *Queries) GetTags(ctx context.Context, arg GetTagsParams) ([]Tag, error)
 	items := []Tag{}
 	for rows.Next() {
 		var i Tag
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.Version,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -78,11 +94,22 @@ func (q *Queries) GetTags(ctx context.Context, arg GetTagsParams) ([]Tag, error)
 	return items, nil
 }
 
+const getTagsCount = `-- name: GetTagsCount :one
+SELECT COUNT(*) FROM tags
+`
+
+func (q *Queries) GetTagsCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getTagsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updateTag = `-- name: UpdateTag :one
 UPDATE tags
 SET name = $1
 WHERE id = $2
-RETURNING id, name
+RETURNING id, name, created_at, version
 `
 
 type UpdateTagParams struct {
@@ -93,6 +120,11 @@ type UpdateTagParams struct {
 func (q *Queries) UpdateTag(ctx context.Context, arg UpdateTagParams) (Tag, error) {
 	row := q.db.QueryRow(ctx, updateTag, arg.Name, arg.ID)
 	var i Tag
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.Version,
+	)
 	return i, err
 }

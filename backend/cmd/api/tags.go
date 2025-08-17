@@ -8,6 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+
+	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
+	"www.github.com/kharljhon14/kwento-ko/internal/filter"
 )
 
 type createTagRequest struct {
@@ -60,5 +63,59 @@ func (s Server) getTagHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, envelope{"data": tag})
+}
 
+type getTagsQuery struct {
+	Page     int32  `form:"page" binding:"omitempty,min=1"`
+	PageSize int32  `form:"page_size" binding:"omitempty,min=5,max=20"`
+	Sort     string `form:"sort" binding:"omitempty"`
+}
+
+func (s Server) getTagsHandler(ctx *gin.Context) {
+	var query getTagsQuery
+
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if query.Page == 0 {
+		query.Page = 1
+	}
+
+	if query.PageSize < 5 {
+		query.PageSize = 5
+	}
+
+	if query.Sort == "" {
+		query.Sort = "created_at"
+	}
+
+	filters := filter.Filter{
+		Page:         query.Page,
+		PageSize:     query.PageSize,
+		Sort:         query.Sort,
+		SortSafeList: []string{"title", "-title", "created_at", "-created_at"},
+	}
+
+	tagsCount, err := s.store.GetTagsCount(ctx)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	getTagsArgs := db.GetTagsParams{
+		Offset: filters.Offset(),
+		Limit:  filters.Limit(),
+	}
+
+	tags, err := s.store.GetTags(ctx, getTagsArgs)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	metadata := filter.CalaculateMetadata(int(tagsCount), int(filters.Page), int(filters.PageSize))
+
+	ctx.JSON(http.StatusOK, envelope{"data": tags, "metadata": metadata})
 }

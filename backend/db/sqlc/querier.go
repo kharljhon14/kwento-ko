@@ -16,6 +16,7 @@ type Querier interface {
 	DeleteTag(ctx context.Context, id pgtype.UUID) error
 	GetTag(ctx context.Context, id pgtype.UUID) (Tag, error)
 	GetTags(ctx context.Context, arg GetTagsParams) ([]Tag, error)
+	GetTagsCount(ctx context.Context) (int64, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	UpdateTag(ctx context.Context, arg UpdateTagParams) (Tag, error)

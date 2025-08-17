@@ -8,9 +8,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Blog struct {
+	ID       pgtype.UUID        `json:"id"`
+	Author   pgtype.UUID        `json:"author"`
+	Title    string             `json:"title"`
+	Content  string             `json:"content"`
+	CreateAt pgtype.Timestamptz `json:"create_at"`
+	Version  int32              `json:"version"`
+}
+
+type BlogTag struct {
+	BlogID pgtype.UUID `json:"blog_id"`
+	TagID  pgtype.UUID `json:"tag_id"`
+}
+
 type Tag struct {
-	ID   pgtype.UUID `json:"id"`
-	Name string      `json:"name"`
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Version   int32              `json:"version"`
 }
 
 type User struct {

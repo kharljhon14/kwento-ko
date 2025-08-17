@@ -17,7 +17,11 @@ WHERE id = $1;
 
 -- name: GetTags :many
 SELECT * FROM tags
+ORDER BY created_at DESC, id ASC
 LIMIT $1 OFFSET $2;
+
+-- name: GetTagsCount :one
+SELECT COUNT(*) FROM tags;
 
 -- name: DeleteTag :exec
 DELETE FROM tags
