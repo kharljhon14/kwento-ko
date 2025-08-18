@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -60,15 +59,7 @@ func (s Server) updateUserHandler(ctx *gin.Context) {
 		var ve validator.ValidationErrors
 
 		if errors.As(err, &ve) {
-			apiErrors := make([]ApiError, len(ve))
-
-			for i, fe := range ve {
-				apiErrors[i] = ApiError{
-					strings.ToLower(fe.Field()),
-					tagErrorMessage(fe),
-				}
-			}
-			failedValidationError(ctx, apiErrors)
+			failedValidationError(ctx, ve)
 			return
 		}
 

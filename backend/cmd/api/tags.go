@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -15,13 +16,19 @@ import (
 )
 
 type createTagRequest struct {
-	Name string `json:"name" binding:"required,max=60"`
+	Name string `json:"name" binding:"required,max=30"`
 }
 
 func (s Server) createTagHandler(ctx *gin.Context) {
 	var req createTagRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			failedValidationError(ctx, ve)
+			return
+		}
+
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -76,6 +83,12 @@ func (s Server) getTagsHandler(ctx *gin.Context) {
 	var query getTagsQuery
 
 	if err := ctx.ShouldBindQuery(&query); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			failedValidationError(ctx, ve)
+			return
+		}
+
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -122,13 +135,19 @@ func (s Server) getTagsHandler(ctx *gin.Context) {
 }
 
 type updateTagRequest struct {
-	Name string `json:"name" binding:"required,max=60"`
+	Name string `json:"name" binding:"required,min=1,max=30"`
 }
 
 func (s Server) updateTagHandler(ctx *gin.Context) {
 	var req updateTagRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			failedValidationError(ctx, ve)
+			return
+		}
+
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
