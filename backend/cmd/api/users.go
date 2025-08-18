@@ -9,35 +9,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
 	"www.github.com/kharljhon14/kwento-ko/internal/token"
 )
 
-type getUserURI struct {
-	ID string `uri:"id" binding:"required"`
-}
-
 func (s Server) getUser(ctx *gin.Context) {
-	var uri getUserURI
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 
-	err := ctx.ShouldBindUri(&uri)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	ID, err := uuid.Parse(uri.ID)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	user, err := s.store.GetUserByID(ctx, pgtype.UUID{Bytes: ID, Valid: true})
+	user, err := s.store.GetUserByID(ctx, authPayload.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			notFoundResponse(ctx, fmt.Errorf("user with ID %s could not be found", uri.ID))
+			notFoundResponse(ctx, fmt.Errorf("user with ID %s could not be found", authPayload.ID))
 			return
 		}
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
