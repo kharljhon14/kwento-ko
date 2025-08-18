@@ -27,26 +27,31 @@ func (q *Queries) AddBlogTags(ctx context.Context, arg AddBlogTagsParams) error 
 }
 
 const getBlogTags = `-- name: GetBlogTags :many
-SELECT  t.name
+SELECT t.id, t.name
 FROM blog_tags b
 INNER JOIN tags t 
 ON t.id = b.tag_id
 WHERE b.blog_id = $1
 `
 
-func (q *Queries) GetBlogTags(ctx context.Context, blogID pgtype.UUID) ([]string, error) {
+type GetBlogTagsRow struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+}
+
+func (q *Queries) GetBlogTags(ctx context.Context, blogID pgtype.UUID) ([]GetBlogTagsRow, error) {
 	rows, err := q.db.Query(ctx, getBlogTags, blogID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []string{}
+	items := []GetBlogTagsRow{}
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var i GetBlogTagsRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
-		items = append(items, name)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -57,15 +62,9 @@ func (q *Queries) GetBlogTags(ctx context.Context, blogID pgtype.UUID) ([]string
 const removeBlogTags = `-- name: RemoveBlogTags :exec
 DELETE FROM blog_tags
 WHERE blog_id = $1
-    AND tag_id = ANY($2::uuid[])
 `
 
-type RemoveBlogTagsParams struct {
-	BlogID  pgtype.UUID   `json:"blog_id"`
-	Column2 []pgtype.UUID `json:"column_2"`
-}
-
-func (q *Queries) RemoveBlogTags(ctx context.Context, arg RemoveBlogTagsParams) error {
-	_, err := q.db.Exec(ctx, removeBlogTags, arg.BlogID, arg.Column2)
+func (q *Queries) RemoveBlogTags(ctx context.Context, blogID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, removeBlogTags, blogID)
 	return err
 }

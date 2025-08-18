@@ -49,6 +49,7 @@ func (s *Server) mountRouter() {
 	authRoutes.GET("/api/v1/blogs", s.getBlogsHandler)
 	authRoutes.POST("/api/v1/blogs", s.createBlogHandler)
 	authRoutes.GET("/api/v1/blogs/:id", s.getBlogHandler)
+	authRoutes.PATCH("/api/v1/blogs/:id", s.updateBlogHandler)
 
 	s.router = router
 }

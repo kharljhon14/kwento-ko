@@ -4,12 +4,11 @@ SELECT $1, unnest($2::uuid[]);
 
 -- name: RemoveBlogTags :exec
 DELETE FROM blog_tags
-WHERE blog_id = $1
-    AND tag_id = ANY($2::uuid[]);
+WHERE blog_id = $1;
 
 
 -- name: GetBlogTags :many
-SELECT  t.name
+SELECT t.id, t.name
 FROM blog_tags b
 INNER JOIN tags t 
 ON t.id = b.tag_id

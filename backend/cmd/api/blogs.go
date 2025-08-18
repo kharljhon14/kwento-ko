@@ -194,3 +194,122 @@ func (s Server) getBlogsHandler(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, envelope{"data": blogs, "metadata": metadata})
 }
+
+type updateBlogRequest struct {
+	Title   *string  `json:"title"`
+	Content *string  `json:"content"`
+	Tags    []string `json:"tags"`
+}
+
+func (s Server) updateBlogHandler(ctx *gin.Context) {
+	var uri getBlogURI
+
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	var req updateBlogRequest
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if req.Tags != nil {
+		if len(req.Tags) > 5 {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("tags must be max of 5")))
+			return
+		}
+	}
+
+	var tagIDs []pgtype.UUID
+	for _, id := range req.Tags {
+		ID, err := uuid.Parse(id)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+
+		tagIDs = append(tagIDs, pgtype.UUID{Bytes: ID, Valid: true})
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	ID, err := uuid.Parse(uri.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	blog, err := s.store.GetBlogByID(ctx, pgtype.UUID{Bytes: ID, Valid: true})
+	if err != nil {
+		if errors.Is(err, sql.ErrConnDone) {
+			notFoundResponse(ctx, fmt.Errorf("blog with ID %s could not be found", ID))
+			return
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if blog.AuthorID != authPayload.ID {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("unauthorized to update this blog"))
+		return
+	}
+
+	args := db.UpdateBlogParams{
+		Title:   blog.Title,
+		Content: blog.Content,
+		ID:      blog.ID,
+	}
+
+	if req.Title != nil {
+		args.Title = *req.Title
+	}
+
+	if req.Content != nil {
+		args.Content = *req.Content
+	}
+
+	updatedBlog, err := s.store.UpdateBlog(ctx, args)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if req.Tags != nil {
+		err := s.store.RemoveBlogTags(ctx, blog.ID)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+
+		err = s.store.AddBlogTags(ctx, db.AddBlogTagsParams{
+			BlogID:  blog.ID,
+			Column2: tagIDs,
+		})
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	}
+
+	tags, err := s.store.GetBlogTags(ctx, blog.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	env := envelope{
+		"data": map[string]any{
+			"id":         updatedBlog.ID,
+			"author":     updatedBlog.Author,
+			"title":      updatedBlog.Title,
+			"content":    updatedBlog.Content,
+			"tags":       tags,
+			"created_at": updatedBlog.CreatedAt,
+			"version":    updatedBlog.Version,
+		},
+	}
+
+	ctx.JSON(http.StatusOK, env)
+}

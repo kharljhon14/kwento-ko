@@ -19,14 +19,14 @@ type Querier interface {
 	DeleteTag(ctx context.Context, id pgtype.UUID) error
 	GetBlogByID(ctx context.Context, id pgtype.UUID) (GetBlogByIDRow, error)
 	GetBlogCount(ctx context.Context) (int64, error)
-	GetBlogTags(ctx context.Context, blogID pgtype.UUID) ([]string, error)
+	GetBlogTags(ctx context.Context, blogID pgtype.UUID) ([]GetBlogTagsRow, error)
 	GetBlogs(ctx context.Context, arg GetBlogsParams) ([]GetBlogsRow, error)
 	GetTag(ctx context.Context, id pgtype.UUID) (Tag, error)
 	GetTags(ctx context.Context, arg GetTagsParams) ([]Tag, error)
 	GetTagsCount(ctx context.Context) (int64, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
-	RemoveBlogTags(ctx context.Context, arg RemoveBlogTagsParams) error
+	RemoveBlogTags(ctx context.Context, blogID pgtype.UUID) error
 	UpdateBlog(ctx context.Context, arg UpdateBlogParams) (Blog, error)
 	UpdateTag(ctx context.Context, arg UpdateTagParams) (Tag, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
