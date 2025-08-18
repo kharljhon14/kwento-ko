@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -44,8 +45,15 @@ func tagErrorMessage(fieldError validator.FieldError) string {
 	case "required":
 		return "this field is required"
 	case "min":
+		if fieldError.Kind() == reflect.Slice {
+			return fmt.Sprintf("minimum of %s item(s)", fieldError.Param())
+		}
 		return fmt.Sprintf("minimum of %s characters", fieldError.Param())
+
 	case "max":
+		if fieldError.Kind() == reflect.Slice {
+			return fmt.Sprintf("maximum of %s item(s)", fieldError.Param())
+		}
 		return fmt.Sprintf("maximum of %s characters", fieldError.Param())
 	default:
 		return ""

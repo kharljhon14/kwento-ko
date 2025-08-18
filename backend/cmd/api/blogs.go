@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
@@ -15,15 +17,25 @@ import (
 )
 
 type createBlogRequest struct {
-	Title   string   `json:"title" binding:"required"`
-	Content string   `json:"content" binding:"required"`
-	Tags    []string `json:"tags" binding:"required"`
+	Title   string   `json:"title" binding:"required,min=1,max=30"`
+	Content string   `json:"content" binding:"required,min=1"`
+	Tags    []string `json:"tags" binding:"required,min=1"`
 }
 
 func (s Server) createBlogHandler(ctx *gin.Context) {
 	var req createBlogRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		if errors.Is(err, io.EOF) {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("body must not be empty")))
+			return
+		}
+
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			failedValidationError(ctx, ve)
+			return
+		}
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -98,6 +110,11 @@ func (s Server) getBlogHandler(ctx *gin.Context) {
 	var uri getBlogURI
 
 	if err := ctx.ShouldBindUri(&uri); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			failedValidationError(ctx, ve)
+			return
+		}
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -150,6 +167,11 @@ func (s Server) getBlogsHandler(ctx *gin.Context) {
 	var query getGlogsQuery
 
 	if err := ctx.ShouldBindQuery(&query); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			failedValidationError(ctx, ve)
+			return
+		}
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -196,9 +218,9 @@ func (s Server) getBlogsHandler(ctx *gin.Context) {
 }
 
 type updateBlogRequest struct {
-	Title   *string  `json:"title"`
-	Content *string  `json:"content"`
-	Tags    []string `json:"tags"`
+	Title   *string  `json:"title" binding:"omitempty,min=1,max=30"`
+	Content *string  `json:"content" binding:"omitempty,min=1"`
+	Tags    []string `json:"tags" binding:"omitempty,min=1,max=5"`
 }
 
 func (s Server) updateBlogHandler(ctx *gin.Context) {
@@ -211,15 +233,23 @@ func (s Server) updateBlogHandler(ctx *gin.Context) {
 
 	var req updateBlogRequest
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		if errors.Is(err, io.EOF) {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("body must not be empty")))
+			return
+		}
+
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			failedValidationError(ctx, ve)
+			return
+		}
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	if req.Tags != nil {
-		if len(req.Tags) > 5 {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("tags must be max of 5")))
-			return
-		}
+	if req.Title == nil && req.Content == nil && len(req.Tags) == 0 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("body must not be empty")))
+		return
 	}
 
 	var tagIDs []pgtype.UUID
@@ -243,7 +273,7 @@ func (s Server) updateBlogHandler(ctx *gin.Context) {
 
 	blog, err := s.store.GetBlogByID(ctx, pgtype.UUID{Bytes: ID, Valid: true})
 	if err != nil {
-		if errors.Is(err, sql.ErrConnDone) {
+		if errors.Is(err, sql.ErrNoRows) {
 			notFoundResponse(ctx, fmt.Errorf("blog with ID %s could not be found", ID))
 			return
 		}
