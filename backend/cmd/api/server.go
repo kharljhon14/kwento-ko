@@ -50,6 +50,7 @@ func (s *Server) mountRouter() {
 	authRoutes.POST("/api/v1/blogs", s.createBlogHandler)
 	authRoutes.GET("/api/v1/blogs/:id", s.getBlogHandler)
 	authRoutes.PATCH("/api/v1/blogs/:id", s.updateBlogHandler)
+	authRoutes.DELETE("/api/v1/blogs/:id", s.deleteBlogHandler)
 
 	s.router = router
 }

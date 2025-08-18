@@ -313,3 +313,48 @@ func (s Server) updateBlogHandler(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, env)
 }
+
+func (s Server) deleteBlogHandler(ctx *gin.Context) {
+	var uri getBlogURI
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	ID, err := uuid.Parse(uri.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	blog, err := s.store.GetBlogByID(ctx, pgtype.UUID{Bytes: ID, Valid: true})
+	if err != nil {
+		if errors.Is(err, sql.ErrConnDone) {
+			notFoundResponse(ctx, fmt.Errorf("blog with ID %s could not be found", ID))
+			return
+		}
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if blog.AuthorID != authPayload.ID {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("unauthorized to update this blog"))
+		return
+	}
+
+	err = s.store.RemoveBlogTags(ctx, blog.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = s.store.DeleteBlog(ctx, db.DeleteBlogParams{ID: blog.ID, Author: blog.AuthorID})
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, nil)
+}
