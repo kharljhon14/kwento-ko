@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,11 @@ func (s Server) createTagHandler(ctx *gin.Context) {
 	var req createTagRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		if errors.Is(err, io.EOF) {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("body must not be empty")))
+			return
+		}
+
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			failedValidationError(ctx, ve)
@@ -142,6 +148,10 @@ func (s Server) updateTagHandler(ctx *gin.Context) {
 	var req updateTagRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
+		if errors.Is(err, io.EOF) {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("body must not be empty")))
+			return
+		}
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			failedValidationError(ctx, ve)

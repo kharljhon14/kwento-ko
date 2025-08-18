@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -56,8 +57,12 @@ func (s Server) updateUserHandler(ctx *gin.Context) {
 	var req updateUserRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
-		var ve validator.ValidationErrors
+		if errors.Is(err, io.EOF) {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(errors.New("body must not be empty")))
+			return
+		}
 
+		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			failedValidationError(ctx, ve)
 			return
