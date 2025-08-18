@@ -3,9 +3,12 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
@@ -34,7 +37,7 @@ func (s Server) getUser(ctx *gin.Context) {
 	user, err := s.store.GetUserByID(ctx, pgtype.UUID{Bytes: ID, Valid: true})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			notFoundResponse(ctx, fmt.Errorf("user with ID %s could not be found", uri.ID))
 			return
 		}
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
@@ -45,7 +48,7 @@ func (s Server) getUser(ctx *gin.Context) {
 }
 
 type updateUserRequest struct {
-	Name string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required,min=5,max=30"`
 }
 
 func (s Server) updateUserHandler(ctx *gin.Context) {
@@ -54,7 +57,22 @@ func (s Server) updateUserHandler(ctx *gin.Context) {
 	var req updateUserRequest
 
 	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
+		var ve validator.ValidationErrors
+
+		if errors.As(err, &ve) {
+			apiErrors := make([]ApiError, len(ve))
+
+			for i, fe := range ve {
+				apiErrors[i] = ApiError{
+					strings.ToLower(fe.Field()),
+					tagErrorMessage(fe),
+				}
+			}
+			failedValidationError(ctx, apiErrors)
+			return
+		}
+
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
