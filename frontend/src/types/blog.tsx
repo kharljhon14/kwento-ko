@@ -4,7 +4,7 @@ export type Blog = {
   content: string;
   created_at: string;
   version: number;
-  name: string;
+  author: string;
   author_id: string;
   tags: string[];
 };

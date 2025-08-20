@@ -10,24 +10,25 @@ export default function Header() {
   const hasUser = userQuery.isSuccess;
 
   return (
-    <header className=" py-4 flex items-center justify-between">
+    <header className="bg-card py-4 flex items-center justify-between border rounded-lg px-12 mt-8">
       <Link
         to="/"
         className="flex items-center"
       >
         <img
           src="/kwento-ko-logo.svg"
-          className="h-10 w-10 mr-2"
+          className="h-8 w-8 mr-2"
         />
-        <h1 className="uppercase text-xl">Kwento Ko</h1>
+        <h1 className="uppercase text-lg">Kwento Ko</h1>
       </Link>
 
       {hasUser && (
-        <div>
+        <div className="flex items-center gap-2">
           <Avatar>
             <AvatarImage src={userQuery.data.data.profile_image} />
             <AvatarFallback>{userQuery.data.data.name[0].toUpperCase()}</AvatarFallback>
           </Avatar>
+          <p>{userQuery.data.data.name}</p>
         </div>
       )}
 

@@ -14,7 +14,7 @@ b.title,
 b.content,
 b.created_at, 
 b.version, 
-u.name, 
+u.name AS author, 
 u.id AS author_id
 FROM blogs b
 INNER JOIN users u
@@ -28,7 +28,7 @@ b.title,
 b.content,
 b.created_at, 
 b.version, 
-u.name, 
+u.name AS author, 
 u.id AS author_id,
 COALESCE(array_agg(t.name) FILTER (WHERE t.id IS NOT NULL), '{}') AS tags
 FROM blogs b

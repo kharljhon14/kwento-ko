@@ -63,7 +63,7 @@ b.title,
 b.content,
 b.created_at, 
 b.version, 
-u.name, 
+u.name AS author, 
 u.id AS author_id
 FROM blogs b
 INNER JOIN users u
@@ -77,7 +77,7 @@ type GetBlogByIDRow struct {
 	Content   string             `json:"content"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	Version   int32              `json:"version"`
-	Name      string             `json:"name"`
+	Author    string             `json:"author"`
 	AuthorID  pgtype.UUID        `json:"author_id"`
 }
 
@@ -90,7 +90,7 @@ func (q *Queries) GetBlogByID(ctx context.Context, id pgtype.UUID) (GetBlogByIDR
 		&i.Content,
 		&i.CreatedAt,
 		&i.Version,
-		&i.Name,
+		&i.Author,
 		&i.AuthorID,
 	)
 	return i, err
@@ -114,7 +114,7 @@ b.title,
 b.content,
 b.created_at, 
 b.version, 
-u.name, 
+u.name AS author, 
 u.id AS author_id,
 COALESCE(array_agg(t.name) FILTER (WHERE t.id IS NOT NULL), '{}') AS tags
 FROM blogs b
@@ -137,7 +137,7 @@ type GetBlogsRow struct {
 	Content   string             `json:"content"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	Version   int32              `json:"version"`
-	Name      string             `json:"name"`
+	Author    string             `json:"author"`
 	AuthorID  pgtype.UUID        `json:"author_id"`
 	Tags      interface{}        `json:"tags"`
 }
@@ -157,7 +157,7 @@ func (q *Queries) GetBlogs(ctx context.Context, arg GetBlogsParams) ([]GetBlogsR
 			&i.Content,
 			&i.CreatedAt,
 			&i.Version,
-			&i.Name,
+			&i.Author,
 			&i.AuthorID,
 			&i.Tags,
 		); err != nil {

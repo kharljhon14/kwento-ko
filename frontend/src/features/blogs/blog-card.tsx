@@ -14,13 +14,13 @@ export default function BlogCard({ blog }: Props) {
       to="/$blogId"
       params={{ blogId: blog.id }}
     >
-      <Card className="h-[320px]">
+      <Card className="h-[320px] bg-card text-text">
         <CardHeader>
-          <CardTitle className="line-clamp-2">{blog.title}</CardTitle>
+          <CardTitle className="line-clamp-2 font-orbiton text-primary">{blog.title}</CardTitle>
           <div className="space-x-2 mt-1">
             {blog.tags.map((tag) => (
               <Badge
-                variant="secondary"
+                variant="outline"
                 key={tag}
               >
                 {tag}
@@ -34,9 +34,9 @@ export default function BlogCard({ blog }: Props) {
           dangerouslySetInnerHTML={{ __html: blog.content }}
         ></CardContent>
         <Separator />
-        <CardFooter className="mt-auto">
-          <div className="flex justify-between w-full text-slate-500">
-            <small>{blog.name}</small>
+        <CardFooter className="mt-auto text-secondary">
+          <div className="flex justify-between w-full">
+            <small>{blog.author}</small>
             <small>
               {new Intl.DateTimeFormat('en-US', {
                 year: 'numeric',

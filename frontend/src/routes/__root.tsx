@@ -8,7 +8,9 @@ export const Route = createRootRoute({
       <div className="container mx-auto">
         <Header />
 
-        <Outlet />
+        <main className="mt-10">
+          <Outlet />
+        </main>
         <TanStackRouterDevtools />
       </div>
     </>
