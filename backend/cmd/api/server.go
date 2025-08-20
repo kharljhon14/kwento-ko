@@ -57,7 +57,7 @@ func (s *Server) mountRouter() {
 	authRoutes.PATCH("/api/v1/tags/:id", s.updateTagHandler)
 	authRoutes.DELETE("/api/v1/tags/:id", s.deleteTagHandler)
 
-	authRoutes.GET("/api/v1/blogs", s.getBlogsHandler)
+	router.GET("/api/v1/blogs", s.getBlogsHandler)
 	authRoutes.POST("/api/v1/blogs", s.createBlogHandler)
 	authRoutes.GET("/api/v1/blogs/:id", s.getBlogHandler)
 	authRoutes.PATCH("/api/v1/blogs/:id", s.updateBlogHandler)

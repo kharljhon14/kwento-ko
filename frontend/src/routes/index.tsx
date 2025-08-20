@@ -1,4 +1,7 @@
-import { Button } from '@/components/ui/button';
+import agent from '@/apis/agents';
+
+import BlogCard from '@/features/blogs/blog-card';
+import { useQuery } from '@tanstack/react-query';
 
 import { createFileRoute } from '@tanstack/react-router';
 
@@ -7,11 +10,26 @@ export const Route = createFileRoute('/')({
 });
 
 function Homepage() {
+  const blogsQuery = useQuery({ queryKey: ['blogs'], queryFn: agent.blogs.getBlogs });
+
+  if (blogsQuery.isLoading) {
+    return <div>Loading</div>;
+  }
+
+  const hasBlogs = blogsQuery.data && blogsQuery.isSuccess;
+
   return (
     <div>
-      <h3>Homepage</h3>
-
-      <Button>Click me</Button>
+      {hasBlogs && (
+        <div className="grid grid-cols-4 gap-4">
+          {blogsQuery.data.data.map((blog) => (
+            <BlogCard
+              key={blog.id}
+              blog={blog}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

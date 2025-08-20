@@ -1,3 +1,4 @@
+import type { Blog } from '@/types/blog';
 import type { User } from '@/types/user';
 import axios, { type AxiosResponse } from 'axios';
 
@@ -34,8 +35,14 @@ const user = {
   getUser: () => requests.get<User>('/api/v1/users')
 };
 
+const blogs = {
+  getBlogs: () => requests.get<Blog[]>('/api/v1/blogs'),
+  getBlog: (id: string) => requests.get<Blog>(`/api/v1/blogs/${id}`)
+};
+
 const agent = {
-  user
+  user,
+  blogs
 };
 
 export default agent;

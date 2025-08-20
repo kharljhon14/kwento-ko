@@ -143,15 +143,13 @@ func (s Server) getBlogHandler(ctx *gin.Context) {
 	}
 
 	env := envelope{
-		"data": map[string]any{
-			"id":         blog.ID,
-			"author":     blog.Name,
-			"title":      blog.Title,
-			"content":    blog.Content,
-			"tags":       tags,
-			"created_at": blog.CreatedAt,
-			"version":    blog.Version,
-		},
+		"id":         blog.ID,
+		"author":     blog.Name,
+		"title":      blog.Title,
+		"content":    blog.Content,
+		"tags":       tags,
+		"created_at": blog.CreatedAt,
+		"version":    blog.Version,
 	}
 
 	ctx.JSON(http.StatusOK, envelope{"data": env})
