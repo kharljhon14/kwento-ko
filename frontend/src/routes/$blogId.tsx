@@ -16,7 +16,7 @@ function RouteComponent() {
   });
 
   return (
-    <div className="border rounded-lg p-10">
+    <div className="border bg-card rounded-lg p-10">
       <div>
         <h2 className="text-center text-5xl font-semibold font-orbiton">
           {blogQuery.data?.data.title}
