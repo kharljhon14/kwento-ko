@@ -3,6 +3,7 @@ package api
 import (
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	db "www.github.com/kharljhon14/kwento-ko/db/sqlc"
 	"www.github.com/kharljhon14/kwento-ko/internal/token"
@@ -30,6 +31,16 @@ func NewServer(store db.Store) (*Server, error) {
 func (s *Server) mountRouter() {
 
 	router := gin.Default()
+
+	router.Use(
+		cors.New(cors.Config{
+			AllowOrigins:     []string{os.Getenv("CLIENT_URL")},
+			AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+			AllowHeaders:     []string{"Origin"},
+			ExposeHeaders:    []string{"Content-Length"},
+			AllowCredentials: true,
+		}),
+	)
 
 	router.GET("/api/v1/health", s.healthCheckHandler)
 	router.GET("/api/v1/auth/:provider", s.signInWithProviderHandler)

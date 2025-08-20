@@ -44,7 +44,7 @@ func (s Server) signInCallbackHandler(ctx *gin.Context) {
 		}
 		ctx.Header(authorizationHeaderKey, token)
 
-		ctx.SetCookie("access_token", token, int(duration.Seconds()), "/", "localhost:8080", true, true)
+		ctx.SetCookie(authorizationHeaderKey, token, int(duration.Seconds()), "/", "localhost:8080", true, true)
 		ctx.Redirect(http.StatusTemporaryRedirect, os.Getenv("CLIENT_URL"))
 		return
 	}
@@ -71,6 +71,7 @@ func (s Server) signInCallbackHandler(ctx *gin.Context) {
 	}
 
 	ctx.Header(authorizationHeaderKey, token)
-	ctx.SetCookie("access_token", token, int(duration.Seconds()), "/", "localhost:8080", true, true)
+
+	ctx.SetCookie(authorizationHeaderKey, token, int(duration.Seconds()), "/", "localhost:8080", true, true)
 	ctx.Redirect(http.StatusTemporaryRedirect, os.Getenv("CLIENT_URL"))
 }
