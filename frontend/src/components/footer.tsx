@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="bg-card py-5 flex items-center text-center justify-between border rounded-lg px-12 my-8">
+    <footer className="bg-card py-5 flex items-center text-center justify-between border rounded-lg px-12 mb-8">
       <a
         href="https://www.karlenriquez.com"
         target="_blank"

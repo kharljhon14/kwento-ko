@@ -27,31 +27,26 @@ func (q *Queries) AddBlogTags(ctx context.Context, arg AddBlogTagsParams) error 
 }
 
 const getBlogTags = `-- name: GetBlogTags :many
-SELECT t.id, t.name
+SELECT  t.name
 FROM blog_tags b
 INNER JOIN tags t 
 ON t.id = b.tag_id
 WHERE b.blog_id = $1
 `
 
-type GetBlogTagsRow struct {
-	ID   pgtype.UUID `json:"id"`
-	Name string      `json:"name"`
-}
-
-func (q *Queries) GetBlogTags(ctx context.Context, blogID pgtype.UUID) ([]GetBlogTagsRow, error) {
+func (q *Queries) GetBlogTags(ctx context.Context, blogID pgtype.UUID) ([]string, error) {
 	rows, err := q.db.Query(ctx, getBlogTags, blogID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetBlogTagsRow{}
+	items := []string{}
 	for rows.Next() {
-		var i GetBlogTagsRow
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, name)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

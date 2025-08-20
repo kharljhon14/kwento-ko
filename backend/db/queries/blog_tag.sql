@@ -8,7 +8,7 @@ WHERE blog_id = $1;
 
 
 -- name: GetBlogTags :many
-SELECT t.id, t.name
+SELECT  t.name
 FROM blog_tags b
 INNER JOIN tags t 
 ON t.id = b.tag_id
