@@ -1,20 +1,20 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import BlogForm from '@/features/blogs/blog-form';
+import { useAuth } from '@/hooks/use-auth';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authenticated/blogs/new')({
-  component: RouteComponent,
-  beforeLoad: ({ context, location }) => {
-    console.log(context.auth);
-    if (!context.auth.isAuthenticated) {
-      throw redirect({
-        to: '/',
-        search: {
-          redirect: location.href
-        }
-      });
-    }
-  }
+  component: RouteComponent
 });
 
 function RouteComponent() {
-  return <div>Hello "/_authenticated/blogs/new"!</div>;
+  const auth = useAuth();
+
+  const router = useRouter();
+  if (auth.isError) router.navigate({ to: '/' });
+
+  return (
+    <div>
+      <BlogForm />
+    </div>
+  );
 }

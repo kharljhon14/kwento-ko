@@ -5,8 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 import { useAuth } from '@/hooks/use-auth';
 
+import { LoaderCircle } from 'lucide-react';
+
 export default function Header() {
-  const { user } = useAuth();
+  const userQuery = useAuth();
+  const hasUser = userQuery.isSuccess;
 
   return (
     <header className="bg-card py-4 flex items-center justify-between border rounded-lg px-12 mt-8">
@@ -21,20 +24,26 @@ export default function Header() {
         <h1 className="uppercase text-lg">Kwento Ko</h1>
       </Link>
 
-      {user && (
+      {hasUser && !userQuery.isLoading && (
         <div className="flex items-center gap-2">
           <Avatar>
-            <AvatarImage src={user.profile_image} />
-            <AvatarFallback>{user.name[0].toUpperCase()}</AvatarFallback>
+            <AvatarImage src={userQuery.data.data.profile_image} />
+            <AvatarFallback>{userQuery.data.data.name[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          <p>{user.name}</p>
+          <p>{userQuery.data.data.name}</p>
         </div>
       )}
 
-      {!user && (
+      {!hasUser && !userQuery.isLoading && (
         <Button asChild>
           <a href="http://localhost:8080/api/v1/auth/google">Sign In</a>
         </Button>
+      )}
+
+      {userQuery.isLoading && (
+        <div>
+          <LoaderCircle className="animate-spin " />
+        </div>
       )}
     </header>
   );

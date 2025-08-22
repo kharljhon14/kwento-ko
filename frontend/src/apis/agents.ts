@@ -1,4 +1,6 @@
+import type { BlogFormSchema } from '@/features/blogs/blog-form';
 import type { Blog } from '@/types/blog';
+import type { Tag } from '@/types/tag';
 import type { User } from '@/types/user';
 import axios, { type AxiosResponse } from 'axios';
 
@@ -35,13 +37,20 @@ const user = {
   getUser: () => requests.get<User>('/api/v1/users')
 };
 
+const tags = {
+  getTags: () => requests.get<Tag[]>('/api/v1/tags?page_size=20000'),
+  createTag: (body: { name: string }) => requests.post<Tag, { name: string }>('/api/v1/tags', body)
+};
+
 const blogs = {
   getBlogs: () => requests.get<Blog[]>('/api/v1/blogs'),
-  getBlog: (id: string) => requests.get<Blog>(`/api/v1/blogs/${id}`)
+  getBlog: (id: string) => requests.get<Blog>(`/api/v1/blogs/${id}`),
+  createBlog: (body: BlogFormSchema) => requests.post<Blog, BlogFormSchema>('/api/v1/blogs', body)
 };
 
 const agent = {
   user,
+  tags,
   blogs
 };
 

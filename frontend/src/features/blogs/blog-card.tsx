@@ -30,7 +30,7 @@ export default function BlogCard({ blog }: Props) {
         </CardHeader>
         <Separator />
         <CardContent
-          className="line-clamp-7 text-sm"
+          className="line-clamp-7 text-sm h-full"
           dangerouslySetInnerHTML={{ __html: blog.content }}
         ></CardContent>
         <Separator />

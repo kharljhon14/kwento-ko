@@ -7,7 +7,6 @@ import './index.css';
 import { routeTree } from './routeTree.gen';
 import Providers from './providers/providers';
 import { useAuth } from './hooks/use-auth';
-import { useUserStore } from './stores/user';
 
 // Create a new router instance
 const router = createRouter({
@@ -15,7 +14,7 @@ const router = createRouter({
   defaultPreload: 'intent',
   scrollRestoration: true,
   context: {
-    auth: { user: undefined, isAuthenticated: false }
+    isAuthenticated: false
   }
 });
 
@@ -29,15 +28,11 @@ declare module '@tanstack/react-router' {
 function InnerApp() {
   const auth = useAuth();
 
-  if (auth.isLoading) {
-    return undefined;
-  }
-
   return (
     <Providers>
       <RouterProvider
         router={router}
-        context={{ auth }}
+        context={{ isAuthenticated: auth.isSuccess }}
       />
     </Providers>
   );

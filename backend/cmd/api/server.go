@@ -36,7 +36,7 @@ func (s *Server) mountRouter() {
 		cors.New(cors.Config{
 			AllowOrigins:     []string{os.Getenv("CLIENT_URL")},
 			AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{"Origin"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
 			ExposeHeaders:    []string{"Content-Length"},
 			AllowCredentials: true,
 		}),

@@ -81,7 +81,7 @@ func (s Server) getTagHandler(ctx *gin.Context) {
 
 type getTagsQuery struct {
 	Page     int32  `form:"page" binding:"omitempty,min=1"`
-	PageSize int32  `form:"page_size" binding:"omitempty,min=5,max=20"`
+	PageSize int32  `form:"page_size" binding:"omitempty,min=5,max=20000"`
 	Sort     string `form:"sort" binding:"omitempty"`
 }
 
